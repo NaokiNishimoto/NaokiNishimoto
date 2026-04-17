@@ -1,28 +1,35 @@
 name: Generate Dynamic Profile Metrics
 
 on:
-  # 毎日日本時間の午前9時(UTC 0時)に定期実行
+  # 毎日日本時間の午前3時(UTC 18時)に定期実行
   schedule:
-    - cron: '0 0 * * *'
-  # 手動でのワークフロー実行を許可
+    - cron: '0 18 * * *'
   workflow_dispatch:
-  # READMEが直接編集された際にもトリガー
   push:
     branches:
       - main
       - master
+    # dist/ への変更では再トリガーしない（無限ループ防止）
+    paths-ignore:
+      - 'dist/**'
 
 jobs:
   generate-metrics:
     runs-on: ubuntu-latest
-      
-    # ボットがリポジトリに変更をコミット・プッシュするための明示的な権限付与
+    # 同時実行を防止
+    concurrency:
+      group: profile-metrics
+      cancel-in-progress: true
+
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          # 最新のリモート状態を取得
+          fetch-depth: 0
 
       # 1. 匿名化されたメトリクスの生成 (lowlighter/metrics)
       - name: Generate GitHub Metrics
@@ -32,27 +39,23 @@ jobs:
           token: ${{ secrets.METRICS_TOKEN }}
           committer_token: ${{ secrets.GITHUB_TOKEN }}
           user: ${{ github.repository_owner }}
-          
           # ベースプラグイン: 全体の統計のみを抽出
           base: header, activity, community, repositories
           base_indepth: false
-          
           # 機密情報保護のための明示的な無効化設定
           plugin_activity: no
           plugin_code: no
           plugin_notable: no
-          
           # 使用言語の統計 (コード内容のクローン解析は行わない)
           plugin_languages: yes
           plugin_languages_ignored: ""
           plugin_languages_limit: 8
           plugin_languages_indepth: no
-          
           # 等角投影図法による活動カレンダーの表示
           plugin_isocalendar: yes
           plugin_isocalendar_duration: half-year
 
-      # 2. プライベート活動の量を示すSnakeアニメーションの生成 (platane/snk)
+      # 2. 活動の量を示すSnakeアニメーションの生成 (platane/snk)
       - name: Generate Snake Animation
         uses: Platane/snk@v3
         with:
@@ -60,6 +63,9 @@ jobs:
           outputs: |
             dist/github-snake.svg
             dist/github-snake-dark.svg?palette=github-dark
+
+      - name: Pull latest changes
+        run: git pull --rebase origin main
 
       # 3. 生成されたファイルをリポジトリへ自動コミット
       - name: Push changes to repository
