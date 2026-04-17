@@ -1,0 +1,70 @@
+name: Generate Dynamic Profile Metrics
+
+on:
+  # 毎日日本時間の午前9時(UTC 0時)に定期実行
+  schedule:
+    - cron: '0 0 * * *'
+  # 手動でのワークフロー実行を許可
+  workflow_dispatch:
+  # READMEが直接編集された際にもトリガー
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  generate-metrics:
+    runs-on: ubuntu-latest
+    # ボットがリポジトリに変更をコミット・プッシュするための明示的な権限付与
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1. 匿名化されたメトリクスの生成 (lowlighter/metrics)
+      - name: Generate GitHub Metrics
+        uses: lowlighter/metrics@latest
+        with:
+          filename: dist/github-metrics.svg
+          token: ${{ secrets.METRICS_TOKEN }}
+          committer_token: ${{ secrets.GITHUB_TOKEN }}
+          user: ${{ github.repository_owner }}
+          
+          # ベースプラグイン: 全体の統計のみを抽出
+          base: header, activity, community, repositories
+          base_indepth: false
+          
+          # 機密情報保護のための明示的な無効化設定
+          plugin_activity: no
+          plugin_code: no
+          plugin_notable: no
+          
+          # 使用言語の統計 (コード内容のクローン解析は行わない)
+          plugin_languages: yes
+          plugin_languages_ignored: ""
+          plugin_languages_limit: 8
+          plugin_languages_indepth: no
+          
+          # 等角投影図法による活動カレンダーの表示
+          plugin_isocalendar: yes
+          plugin_isocalendar_duration: half-year
+
+      # 2. プライベート活動の量を示すSnakeアニメーションの生成 (platane/snk)
+      - name: Generate Snake Animation
+        uses: Platane/snk/svg-only@v3
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: |
+            dist/github-snake.svg
+            dist/github-snake-dark.svg?palette=github-dark
+
+      # 3. 生成されたファイルをリポジトリへ自動コミット
+      - name: Push changes to repository
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: " Update dynamically generated profile metrics"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          file_pattern: 'dist/*.svg'
