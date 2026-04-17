@@ -22,7 +22,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@latest
+        uses: actions/checkout@v6
 
       # 1. 匿名化されたメトリクスの生成 (lowlighter/metrics)
       - name: Generate GitHub Metrics
@@ -54,7 +54,7 @@ jobs:
 
       # 2. プライベート活動の量を示すSnakeアニメーションの生成 (platane/snk)
       - name: Generate Snake Animation
-        uses: Platane/snk/svg-only@latest
+        uses: Platane/snk@v3
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
@@ -63,7 +63,7 @@ jobs:
 
       # 3. 生成されたファイルをリポジトリへ自動コミット
       - name: Push changes to repository
-        uses: stefanzweifel/git-auto-commit-action@latest
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: " Update dynamically generated profile metrics"
           commit_user_name: "github-actions[bot]"
