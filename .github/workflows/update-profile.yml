@@ -15,6 +15,11 @@ on:
 jobs:
   generate-metrics:
     runs-on: ubuntu-latest
+
+    # Node.js 20の非推奨警告を回避し、Node.js 24での実行を強制する
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      
     # ボットがリポジトリに変更をコミット・プッシュするための明示的な権限付与
     permissions:
       contents: write
