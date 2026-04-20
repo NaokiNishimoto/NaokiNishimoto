@@ -64,6 +64,9 @@ jobs:
             dist/github-snake.svg
             dist/github-snake-dark.svg?palette=github-dark
 
+      - name: Pull remote changes
+        run: git pull
+
       # 3. 生成されたファイルをリポジトリへ自動コミット
       - name: Push changes to repository
         uses: stefanzweifel/git-auto-commit-action@v7
@@ -72,4 +75,3 @@ jobs:
           commit_user_name: "github-actions[bot]"
           commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
           file_pattern: 'dist/*.svg'
-          pull_before_commit: true
