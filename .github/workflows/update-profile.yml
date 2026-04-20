@@ -64,9 +64,6 @@ jobs:
             dist/github-snake.svg
             dist/github-snake-dark.svg?palette=github-dark
 
-      - name: Pull latest changes
-        run: git pull --rebase origin main
-
       # 3. 生成されたファイルをリポジトリへ自動コミット
       - name: Push changes to repository
         uses: stefanzweifel/git-auto-commit-action@v7
